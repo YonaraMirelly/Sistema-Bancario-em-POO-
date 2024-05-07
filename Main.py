@@ -12,9 +12,9 @@ class Conta:
         return f'{float(self._saldo)}'
     
     @classmethod
-    def nova_conta(self, cliente, numero):
-        return cls(numero, cliente)
-
+    def nova_conta(cls, cliente, numero):
+        return cls(numero, cliente) 
+    
     def sacar(self):
         qtde = float(input('Quando vc quer sacar? '))
         if qtde < 0:
@@ -115,3 +115,134 @@ class Pessoa(Cliente):
         self.nome = nome 
         self.data = data
         super().__init__(end)
+
+def menu():
+    menu = """\n
+    ++++++++++MENU++++++++++
+    [d] Depositar
+    [s] Sacar
+    [e] Extrato
+    [nc] Nova Conta
+    [lc] Listar Contas
+    [nu] Novo Usuário
+    [q] Sair
+    ->
+"""
+    return input(menu)
+
+def depositar(clientes):
+    cpf = input('CPF -> ')
+    cliente = filtrar_cliente(cpf, clientes)
+
+    if not cliente:
+        print('Cliente não foi encontrado!')
+        return
+    valor = float(input('Valor do depósito -> '))
+    transação = Deposito(valor)
+    conta = recuperar_conta_cliente(cliente)
+    if not conta:
+        return
+    cliente.realizar_transação(conta, transação)
+
+def filtrar_cliente(cpf, clientes):
+    clientes_filtrados = [c for c in clientes if c._cpf == cpf]
+    return clientes_filtrados[0] if clientes_filtrados else None
+
+def recuperar_conta_cliente(cliente):
+    if not cliente.contas:
+        print('Esse cliente não possui conta!')
+        return
+    return cliente.contas[0]
+
+def sacar(clientes):
+    cpf = input('CPF -> ')
+    cliente = filtrar_cliente(cpf, clientes)
+
+    if not cliente:
+        print('Cliente não foi encontrado!')
+        return 
+    valor = float(input('Saque -> '))
+    transação = Saque(valor)
+    conta = recuperar_conta_cliente(cliente)
+    if not conta:
+        return 
+    cliente.realizar_transação(conta, transação)
+
+def exibir_extrato(clientes):
+    cpf = input('CPF -> ')
+    cliente = filtrar_cliente(cpf, clientes)
+
+    if not cliente:
+        print('Cliente não foi encontrado!')
+        return 
+    conta = recuperar_conta_cliente(cliente)
+    if not conta:
+        return 
+    print('==EXTARTO==')
+    transações = conta.hitorico.transações
+
+    extrato = ''
+    if not transações:
+        extrato = 'Não há movimentação'
+    else:
+        for transação in transações:
+            extrato += f'{transação['tipo']}: R$ {transação['valor']:.2f}'
+    
+    print(extrato)
+    print(f'Saldo -> {conta.saldo:.2f}')
+
+def criar_conta(n_conta, clientes, contas):
+    cpf = input('CPf -> ')
+    cliente = filtrar_cliente(cpf, clientes)
+
+    if not cliente:
+        print('Cliente não foi encontrado!')
+        return 
+    conta = ContaCorrente.nova_conta(cliente = cliente, numero = n_conta)
+    contas.append(conta)
+    cliente.contas.append(conta)
+    print('Conta realizada com sucesso!')
+
+def listar_contas(contas):
+    for c in contas:
+        print('-=-' * 10)
+        print((str(c)))
+
+def criar_cliente(clientes):
+    cpf = input('CPF -> ')
+    cliente = filtrar_cliente(cpf, clientes)
+
+    if cliente:
+        print('Já tem cliente com o mesmo cpf.')
+        return 
+    nome = input('Nome -> ')
+    data = input('Data de Nascimento -> ')
+    end = input('Endereço -> ')
+    cliente = Pessoa(nome = nome, data = data, cpf = cpf, end = end)
+    clientes.append(cliente)
+    print('Cliente criado com suceso!')
+
+def main():
+    clientes = []
+    contas = []
+
+    while True:
+        op = menu()
+
+        if op == 'd':
+            depositar(clientes)
+        elif op == 's':
+            sacar(clientes)
+        elif op == 'e':
+            exibir_extrato(clientes)
+        elif op  == 'nu':
+            criar_cliente(clientes)
+        elif op == 'nc':
+            numero_conta = len(contas) +1
+            criar_conta(numero_conta, clientes, contas)
+        elif op == 'lc':
+            listar_contas(contas)
+        elif op == 'q':
+            break
+
+main()
